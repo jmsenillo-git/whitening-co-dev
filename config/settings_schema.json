@@ -1763,6 +1763,38 @@
         "default": true
       },
       {
+        "type": "header",
+        "content": "Spin the wheel before checkout"
+      },
+      {
+        "type": "checkbox",
+        "id": "spin_wheel_checkout_enabled",
+        "label": "Enable spin the wheel before checkout",
+        "default": false
+      },
+      {
+        "type": "text",
+        "id": "spin_wheel_popup_id",
+        "label": "PopupBoost campaign or popup ID",
+        "info": "Used when PopupBoost supports opening a specific campaign by ID.",
+        "visible_if": "{{ settings.spin_wheel_checkout_enabled == true }}"
+      },
+      {
+        "type": "text",
+        "id": "spin_wheel_trigger_selector",
+        "label": "PopupBoost trigger selector",
+        "info": "Optional CSS selector for a manual PopupBoost trigger if the app API is unavailable.",
+        "visible_if": "{{ settings.spin_wheel_checkout_enabled == true }}"
+      },
+      {
+        "type": "text",
+        "id": "spin_wheel_coupon_code_prefix",
+        "label": "Coupon Code Prefix",
+        "default": "FG_",
+        "info": "Used to detect a claimed free gift already in the cart.",
+        "visible_if": "{{ settings.spin_wheel_checkout_enabled == true }}"
+      },
+      {
         "type": "url",
         "id": "empty_cart_button_link",
         "label": "t:settings.empty_cart_button_link",

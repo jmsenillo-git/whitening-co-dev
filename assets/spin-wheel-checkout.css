@@ -1,0 +1,22 @@
+.cart__checkout-button[data-spin-wheel-checkout-button][aria-busy='true'] {
+  opacity: 0.72;
+  pointer-events: none;
+}
+
+.cart__spin-wheel-message {
+  color: rgb(var(--color-foreground-rgb) / var(--opacity-subdued-text));
+  font-size: var(--font-size--2xs);
+  margin: 0;
+  text-align: center;
+}
+
+.cart__spin-wheel-message[data-type='error'] {
+  color: var(--color-error);
+}
+
+.pb-teaser,
+.pb-teaser-tab {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
