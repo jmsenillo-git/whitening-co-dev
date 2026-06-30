@@ -5,10 +5,6 @@
   @param {string} [section_id] - The section ID for cart discount component.
 {%- enddoc -%}
 
-{% liquid
-  assign spin_wheel_checkout_enabled = true
-%}
-
 <div class="cart-totals">
   {% # We need to keep this node in place to allow morphing to work properly # %}
   <div class="cart-totals__original-container cart-primary-typography">
@@ -257,18 +253,12 @@
   </div>
 </div>
 
-<div
-  class="cart__ctas"
-  data-spin-wheel-checkout
->
+<div class="cart__ctas">
   <button
     type="submit"
     id="checkout"
     class="cart__checkout-button button"
     name="checkout"
-    data-spin-wheel-checkout-button
-    data-popupboost-spin-trigger
-    data-checkout-url="{{ routes.root_url }}checkout"
     {% if cart == empty %}
       disabled
     {% endif %}
@@ -279,24 +269,7 @@
     </span>
   </button>
 
-  <p
-    class="cart__spin-wheel-message cart-primary-typography"
-    data-spin-wheel-message
-    role="status"
-    hidden
-  ></p>
-
-  <button
-    type="button"
-    class="visually-hidden"
-    data-popupboost-spin-trigger
-    tabindex="-1"
-    aria-hidden="true"
-  >
-    Spin to win
-  </button>
-
-  {% if spin_wheel_checkout_enabled == false and additional_checkout_buttons and settings.show_accelerated_checkout_buttons %}
+  {% if additional_checkout_buttons and settings.show_accelerated_checkout_buttons %}
     <div
       class="
         additional-checkout-buttons
@@ -494,21 +467,6 @@
     width: 100%;
     height: clamp(25px, var(--height-buy-buttons), 55px);
     padding-inline: var(--padding-4xl);
-  }
-
-  .cart__ctas .cart__checkout-button[aria-busy] {
-    opacity: 0.72;
-  }
-
-  .cart__spin-wheel-message {
-    color: rgb(var(--color-foreground-rgb) / var(--opacity-subdued-text));
-    font-size: var(--font-size--2xs);
-    margin: 0;
-    text-align: center;
-  }
-
-  .cart__spin-wheel-message[data-type='error'] {
-    color: var(--color-error);
   }
 
   .cart-drawer__summary .cart-totals:not(:has(.cart-totals__original-container:empty)) {

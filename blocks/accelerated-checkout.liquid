@@ -12,7 +12,6 @@
 {%- enddoc -%}
 
 {% liquid
-  assign spin_wheel_checkout_enabled = true
   assign product = closest.product
   if request.visual_preview_mode and product == blank
     assign product = collections.all.products.first
@@ -25,7 +24,7 @@
   {% endif %}
 {% endcapture %}
 
-{% if spin_wheel_checkout_enabled == false and accelerated_checkout_button != blank %}
+{% if accelerated_checkout_button != blank %}
   <div
     class="accelerated-checkout-block"
     ref="acceleratedCheckoutButtonContainer"
