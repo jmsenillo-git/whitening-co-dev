@@ -299,8 +299,30 @@
       predictive_search_url: '{{ routes.predictive_search_url }}',
       search_url: '{{ routes.search_url }}',
     },
+    spinWheelCheckout: {
+      enabled: true,
+      checkoutUrl: '{{ routes.root_url }}checkout',
+      customerLoggedIn: {% if customer %}true{% else %}false{% endif %},
+      customerId: {% if customer and customer.id %}{{ customer.id | json }}{% else %}null{% endif %},
+      autofillEmail: {% if customer and customer.email != blank %}{{ customer.email | json }}{% else %}null{% endif %},
+    },
     template: {
       name: '{{ template }}',
     },
   };
 </script>
+
+<style>
+  .pb-teaser,
+  .pb-teaser-tab {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+</style>
+
+<script
+  src="{{ 'spin-wheel-checkout.js' | asset_url }}"
+  type="module"
+  fetchpriority="low"
+></script>
