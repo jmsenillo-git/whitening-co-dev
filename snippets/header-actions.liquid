@@ -213,6 +213,27 @@
   {% endif %}
 </header-actions>
 
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var checkoutBtn = document.getElementById('checkout');
+  
+  if (checkoutBtn) {
+    checkoutBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      
+      // Open the PopupBoost spin wheel
+      if (window.PopupBoost) {
+        window.PopupBoost.open();
+      } else {
+        // Fallback: try dispatching the popup-boost custom event
+        document.dispatchEvent(new CustomEvent('popup-boost:open'));
+      }
+    });
+  }
+});
+</script>
+
 {% stylesheet %}
   .account-popover {
     --account-popover-min-width: 22rem;
