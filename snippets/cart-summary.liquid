@@ -253,12 +253,24 @@
   </div>
 </div>
 
-<div class="cart__ctas">
+<div
+  class="cart__ctas"
+  {% if settings.spin_wheel_checkout_enabled %}
+    data-spin-wheel-checkout
+  {% endif %}
+>
   <button
     type="submit"
     id="checkout"
     class="cart__checkout-button button"
     name="checkout"
+    {% if settings.spin_wheel_checkout_enabled %}
+      data-spin-wheel-checkout-button
+      data-spin-wheel-popup-id="{{ settings.spin_wheel_popup_id | escape }}"
+      data-spin-wheel-trigger-selector="{{ settings.spin_wheel_trigger_selector | escape }}"
+      data-spin-wheel-coupon-code-prefix="{{ settings.spin_wheel_coupon_code_prefix | escape }}"
+      data-checkout-url="{{ routes.root_url }}checkout"
+    {% endif %}
     {% if cart == empty %}
       disabled
     {% endif %}
@@ -269,7 +281,16 @@
     </span>
   </button>
 
-  {% if additional_checkout_buttons and settings.show_accelerated_checkout_buttons %}
+  {% if settings.spin_wheel_checkout_enabled %}
+    <p
+      class="cart__spin-wheel-message cart-primary-typography"
+      data-spin-wheel-message
+      role="status"
+      hidden
+    ></p>
+  {% endif %}
+
+  {% if additional_checkout_buttons and settings.show_accelerated_checkout_buttons and settings.spin_wheel_checkout_enabled != true %}
     <div
       class="
         additional-checkout-buttons

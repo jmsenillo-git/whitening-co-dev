@@ -24,7 +24,7 @@
   {% endif %}
 {% endcapture %}
 
-{% if accelerated_checkout_button != blank %}
+{% if accelerated_checkout_button != blank and settings.spin_wheel_checkout_enabled != true %}
   <div
     class="accelerated-checkout-block"
     ref="acceleratedCheckoutButtonContainer"

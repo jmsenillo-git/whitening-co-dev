@@ -302,5 +302,23 @@
     template: {
       name: '{{ template }}',
     },
+    {% if settings.spin_wheel_checkout_enabled %}
+      spinWheelCheckout: {
+        enabled: true,
+        checkoutUrl: '{{ routes.root_url }}checkout',
+        popupId: {{ settings.spin_wheel_popup_id | json }},
+        triggerSelector: {{ settings.spin_wheel_trigger_selector | json }},
+        couponCodePrefix: {{ settings.spin_wheel_coupon_code_prefix | json }},
+        customerId: {% if customer and customer.id %}{{ customer.id | json }}{% else %}null{% endif %},
+      },
+    {% endif %}
   };
 </script>
+
+{% if settings.spin_wheel_checkout_enabled %}
+  <script
+    src="{{ 'spin-wheel-checkout.js' | asset_url }}"
+    type="module"
+    fetchpriority="low"
+  ></script>
+{% endif %}
