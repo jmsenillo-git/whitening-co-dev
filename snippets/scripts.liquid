@@ -309,7 +309,11 @@
         popupId: {{ settings.spin_wheel_popup_id | json }},
         triggerSelector: {{ settings.spin_wheel_trigger_selector | json }},
         couponCodePrefix: {{ settings.spin_wheel_coupon_code_prefix | json }},
+        autofillCustomerEmail: {{ settings.spin_wheel_autofill_customer_email | json }},
+        hideLoggedInEmailForm: {{ settings.spin_wheel_hide_logged_in_email_form | json }},
+        soldOutWarningEnabled: {{ settings.spin_wheel_sold_out_warning_enabled | json }},
         customerId: {% if customer and customer.id %}{{ customer.id | json }}{% else %}null{% endif %},
+        customerEmail: {% if customer and customer.email %}{{ customer.email | json }}{% else %}null{% endif %},
       },
     {% endif %}
   };

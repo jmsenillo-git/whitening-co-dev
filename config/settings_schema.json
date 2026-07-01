@@ -1795,6 +1795,29 @@
         "visible_if": "{{ settings.spin_wheel_checkout_enabled == true }}"
       },
       {
+        "type": "checkbox",
+        "id": "spin_wheel_autofill_customer_email",
+        "label": "Enable automatic email input for logged-in customers",
+        "default": false,
+        "visible_if": "{{ settings.spin_wheel_checkout_enabled == true }}"
+      },
+      {
+        "type": "checkbox",
+        "id": "spin_wheel_hide_logged_in_email_form",
+        "label": "Hide email form for logged-in customers",
+        "info": "Requires automatic email input to keep guest email capture visible.",
+        "default": false,
+        "visible_if": "{{ settings.spin_wheel_checkout_enabled == true }}"
+      },
+      {
+        "type": "checkbox",
+        "id": "spin_wheel_sold_out_warning_enabled",
+        "label": "Product Sold out warning",
+        "info": "Show a warning when the free gift reward is sold out and can't be claimed.",
+        "default": true,
+        "visible_if": "{{ settings.spin_wheel_checkout_enabled == true }}"
+      },
+      {
         "type": "url",
         "id": "empty_cart_button_link",
         "label": "t:settings.empty_cart_button_link",

@@ -50,6 +50,22 @@ class SpinWheelCheckout {
     return String(this.activeButton?.dataset.spinWheelCouponCodePrefix || this.config.couponCodePrefix || '').trim();
   }
 
+  get customerEmail() {
+    return String(this.config.customerEmail || '').trim();
+  }
+
+  get shouldAutofillCustomerEmail() {
+    return Boolean(this.config.autofillCustomerEmail && this.customerEmail);
+  }
+
+  get shouldHideLoggedInEmailForm() {
+    return Boolean(this.config.hideLoggedInEmailForm && this.shouldAutofillCustomerEmail);
+  }
+
+  get soldOutWarningEnabled() {
+    return this.config.soldOutWarningEnabled !== false;
+  }
+
   sleep(duration) {
     return new Promise((resolve) => setTimeout(resolve, duration));
   }
@@ -263,6 +279,106 @@ class SpinWheelCheckout {
     button.removeAttribute('aria-busy');
   }
 
+  setNativeInputValue(input, value) {
+    const valueSetter = Object.getOwnPropertyDescriptor(input.constructor.prototype, 'value')?.set;
+
+    if (valueSetter) {
+      valueSetter.call(input, value);
+    } else {
+      input.value = value;
+    }
+  }
+
+  dispatchFieldEvents(input) {
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+  inputLooksLikeEmail(input) {
+    if (!(input instanceof HTMLInputElement)) return false;
+    if (input.disabled || ['hidden', 'submit', 'button', 'checkbox', 'radio'].includes(input.type)) return false;
+    if (input.type === 'email') return true;
+
+    const descriptor = [
+      input.name,
+      input.id,
+      input.placeholder,
+      input.autocomplete,
+      input.getAttribute('aria-label'),
+      input.className,
+    ]
+      .filter(Boolean)
+      .join(' ');
+
+    return /email/i.test(descriptor);
+  }
+
+  getPopupBoostEmailInputs() {
+    const roots = this.getPopupBoostElements();
+    const inputs = roots.flatMap((root) => [...root.querySelectorAll('input')]).filter((input) => {
+      return this.inputLooksLikeEmail(input);
+    });
+
+    return [...new Set(inputs)];
+  }
+
+  getEmailFieldContainer(input) {
+    const popupRoot = this.getPopupBoostElements().find((root) => root.contains(input));
+    let bestMatch = input;
+    let element = input.parentElement;
+
+    for (let depth = 0; element && element !== popupRoot && depth < 4; depth += 1) {
+      const controls = element.querySelectorAll('input, select, textarea, button, [role="button"]');
+      const actions = element.querySelectorAll('button, [role="button"], input[type="submit"], input[type="button"]');
+      const descriptor = [element.className, element.id].filter(Boolean).join(' ');
+
+      if (controls.length <= 2 && actions.length === 0) {
+        bestMatch = element;
+        if (/email|field|input|form-group|form__field/i.test(descriptor)) break;
+      }
+
+      if (actions.length > 0 || controls.length > 3 || element.tagName === 'FORM') break;
+
+      element = element.parentElement;
+    }
+
+    return bestMatch;
+  }
+
+  setEmailInputValue(input) {
+    if (input.value !== this.customerEmail) {
+      this.setNativeInputValue(input, this.customerEmail);
+      input.setAttribute('value', this.customerEmail);
+      this.dispatchFieldEvents(input);
+    }
+  }
+
+  hideEmailInput(input) {
+    const container = this.getEmailFieldContainer(input);
+
+    input.readOnly = true;
+    input.tabIndex = -1;
+
+    if (container instanceof HTMLElement) {
+      container.hidden = true;
+      container.setAttribute('data-spin-wheel-email-hidden', 'true');
+    }
+  }
+
+  syncPopupBoostEmailForm() {
+    if (!this.shouldAutofillCustomerEmail && !this.shouldHideLoggedInEmailForm) return;
+
+    for (const input of this.getPopupBoostEmailInputs()) {
+      if (this.shouldAutofillCustomerEmail) {
+        this.setEmailInputValue(input);
+      }
+
+      if (this.shouldHideLoggedInEmailForm) {
+        this.hideEmailInput(input);
+      }
+    }
+  }
+
   isVisibleElement(element) {
     if (!(element instanceof HTMLElement)) return false;
     if (element instanceof HTMLButtonElement && element.disabled) return false;
@@ -274,7 +390,7 @@ class SpinWheelCheckout {
     return style.display !== 'none' && style.visibility !== 'hidden' && rect.width > 0 && rect.height > 0;
   }
 
-  getPopupBoostRoots() {
+  getPopupBoostElements() {
     return [
       ...document.querySelectorAll(
         '.pb-modal, .pb-popup, .pb-overlay, [class^="pb-"], [class*=" pb-"], [class*="popupboost"], [class*="popup-boost"], [id*="popupboost"], [id*="popup-boost"]'
@@ -283,6 +399,12 @@ class SpinWheelCheckout {
       if (!(element instanceof HTMLElement)) return false;
       if (element.closest('.pb-teaser')) return false;
 
+      return true;
+    });
+  }
+
+  getPopupBoostRoots() {
+    return this.getPopupBoostElements().filter((element) => {
       return /spin|wheel|gift|prize|win/i.test(element.textContent || '');
     });
   }
@@ -298,6 +420,22 @@ class SpinWheelCheckout {
     return error;
   }
 
+  createRewardUnavailableError() {
+    const error = new Error("The free gift reward is sold out and can't be claimed.");
+    error.name = 'SpinWheelRewardUnavailableError';
+
+    return error;
+  }
+
+  hasRewardUnavailableMessage() {
+    const unavailablePattern =
+      /sold\s*out|out\s+of\s+stock|no\s+longer\s+available|not\s+available|unavailable|cannot\s+be\s+claimed|can't\s+be\s+claimed|cant\s+be\s+claimed/i;
+
+    return this.getPopupBoostRoots().some((element) => {
+      return this.isVisibleElement(element) && unavailablePattern.test(element.textContent || '');
+    });
+  }
+
   updatePopupBoostState() {
     if (this.hasVisiblePopupBoostPopup()) {
       this.hasSeenPopupBoostPopup = true;
@@ -306,11 +444,13 @@ class SpinWheelCheckout {
 
   startPopupBoostObserver() {
     this.updatePopupBoostState();
+    this.syncPopupBoostEmailForm();
 
     if (this.popupBoostObserver) return;
 
     this.popupBoostObserver = new MutationObserver(() => {
       this.updatePopupBoostState();
+      this.syncPopupBoostEmailForm();
     });
 
     this.popupBoostObserver.observe(document.body, {
@@ -344,6 +484,7 @@ class SpinWheelCheckout {
     }
 
     setTimeout(() => this.updatePopupBoostState(), 100);
+    setTimeout(() => this.syncPopupBoostEmailForm(), 300);
 
     return true;
   }
@@ -395,6 +536,7 @@ class SpinWheelCheckout {
     }
 
     this.updatePopupBoostState();
+    this.syncPopupBoostEmailForm();
 
     return true;
   }
@@ -405,6 +547,11 @@ class SpinWheelCheckout {
     while (Date.now() - startedAt < SpinWheelCheckout.defaults.pollTimeout) {
       await this.sleep(SpinWheelCheckout.defaults.pollInterval);
       this.updatePopupBoostState();
+      this.syncPopupBoostEmailForm();
+
+      if (this.hasRewardUnavailableMessage()) {
+        throw this.createRewardUnavailableError();
+      }
 
       const currentCart = await this.getCart();
       const hasConfirmedReward = this.couponCodePrefix
@@ -424,7 +571,7 @@ class SpinWheelCheckout {
       }
     }
 
-    throw new Error('Gift was not added before the timeout.');
+    throw this.createRewardUnavailableError();
   }
 
   continueToCheckout(button) {
@@ -485,6 +632,8 @@ class SpinWheelCheckout {
       console.error('[Spin Wheel Checkout]', error);
       if (error?.name === 'SpinWheelPopupClosedError') {
         this.setMessage(button, 'Spin the wheel before checkout to claim your free gift.', 'error');
+      } else if (error?.name === 'SpinWheelRewardUnavailableError' && this.soldOutWarningEnabled) {
+        this.setMessage(button, "The free gift reward is sold out and can't be claimed.", 'error');
       } else {
         this.setMessage(button, 'We could not confirm your free gift. Please spin and claim your prize before checkout.', 'error');
       }
